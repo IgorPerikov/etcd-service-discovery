@@ -1,14 +1,5 @@
-*.bat
-
 *.iml
 .idea/
-
 build/
 *.class
-
-target
-build
-out/
-temp*
-dist
-test-output
+.gradle

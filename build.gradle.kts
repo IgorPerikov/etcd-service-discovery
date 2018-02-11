@@ -1,20 +1,25 @@
 group = "com.github.igorperikov.etcd"
-version = "0.0.1"
 
-plugins {
-   java
-}
+subprojects.forEach({
+    project: Project? ->
+    run {
+        project?.plugins?.apply("java")
+        project?.configure<JavaPluginConvention> {
+            sourceCompatibility = JavaVersion.VERSION_1_8
+        }
+        project?.repositories {
+            mavenLocal()
+            jcenter()
+            mavenCentral()
+        }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
+        setDependenyVersion(project, "jetcd", "0.0.1")
+        setDependenyVersion(project, "guava", "23.0")
+        setDependenyVersion(project, "testcontainers", "1.6.0")
+        setDependenyVersion(project, "junit", "4.12")
+    }
+})
 
-dependencies {
-    testCompile("junit:junit:4.12")
-}
-
-repositories {
-    jcenter()
-    mavenLocal()
+fun setDependenyVersion(project: Project?, key: String, value: String): Unit {
+    project?.ext?.set(key, value)
 }
