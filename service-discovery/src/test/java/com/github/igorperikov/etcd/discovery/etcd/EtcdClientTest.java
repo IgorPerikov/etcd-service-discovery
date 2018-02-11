@@ -1,7 +1,6 @@
 package com.github.igorperikov.etcd.discovery.etcd;
 
 import com.coreos.jetcd.kv.GetResponse;
-import com.github.igorperikov.etcd.discovery.utility.AddressPair;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -30,9 +29,11 @@ public class EtcdClientTest {
 
     @BeforeClass
     public static void initClient() {
-        AddressPair etcdAddress = AddressPair.of(etcd.getContainerIpAddress(), etcd.getMappedPort(2379));
-        String endpoint = etcdAddress.toString();
-        etcdClient = new EtcdClient("http://" + endpoint);
+        etcdClient = EtcdClient.newBuilder()
+                .withEndpoint(
+                        etcd.getContainerIpAddress(),
+                        etcd.getMappedPort(2379)
+                ).build();
     }
 
     @Test

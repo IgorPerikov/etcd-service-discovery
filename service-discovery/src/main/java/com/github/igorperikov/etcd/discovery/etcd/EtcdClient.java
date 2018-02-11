@@ -9,9 +9,12 @@ import com.coreos.jetcd.kv.GetResponse;
 import com.coreos.jetcd.kv.PutResponse;
 import com.coreos.jetcd.options.PutOption;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class EtcdClient implements AutoCloseable {
     private final Client etcdClient;
@@ -19,16 +22,7 @@ public class EtcdClient implements AutoCloseable {
     private final Watch watchClient;
     private final Lease leaseClient;
 
-    // TODO: provide builder with scheme providing
-    public EtcdClient() {
-        this("http://localhost:2379");
-    }
-
-    public EtcdClient(String endpoint) {
-        this(Collections.singletonList(endpoint));
-    }
-
-    public EtcdClient(Collection<String> endpoints) {
+    private EtcdClient(Collection<String> endpoints) {
         etcdClient = Client.builder().endpoints(endpoints).build();
         kvClient = etcdClient.getKVClient();
         watchClient = etcdClient.getWatchClient();
@@ -56,5 +50,41 @@ public class EtcdClient implements AutoCloseable {
         kvClient.close();
         watchClient.close();
         leaseClient.close();
+    }
+
+    public static Builder newBuilder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private String scheme = "http";
+        private Set<String> endpoints = new HashSet<>();
+
+        private Builder() {
+        }
+
+        public EtcdClient build() throws IllegalStateException {
+            if (endpoints.isEmpty()) {
+                throw new IllegalStateException("Provide at least one endpoint!");
+            }
+            return new EtcdClient(
+                    endpoints.stream()
+                            .map(endpoint -> scheme + "://" + endpoint)
+                            .collect(Collectors.toList())
+            );
+        }
+
+        public Builder withScheme(String scheme) {
+            this.scheme = scheme;
+            return this;
+        }
+
+        public Builder withEndpoint(
+                @Nonnull String address,
+                int port
+        ) {
+            this.endpoints.add(address + ":" + port);
+            return this;
+        }
     }
 }
