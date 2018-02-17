@@ -1,4 +1,4 @@
-package com.github.igorperikov.etcd.discovery.utility;
+package com.github.igorperikov.etcd.discovery.domain;
 
 public class AddressPair extends Pair<String, Integer> {
     /**

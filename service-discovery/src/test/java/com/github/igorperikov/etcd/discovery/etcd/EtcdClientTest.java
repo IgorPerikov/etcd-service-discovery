@@ -1,50 +1,46 @@
 package com.github.igorperikov.etcd.discovery.etcd;
 
 import com.coreos.jetcd.kv.GetResponse;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
+import com.github.igorperikov.etcd.discovery.EtcdTestClusterConfiguration;
 import org.junit.Test;
-import org.testcontainers.containers.GenericContainer;
 
 import java.util.concurrent.CompletableFuture;
 
 import static org.junit.Assert.assertEquals;
 
-public class EtcdClientTest {
-    @ClassRule
-    public static GenericContainer etcd =
-            new GenericContainer("gcr.io/etcd-development/etcd:latest")
-                    .withExposedPorts(2379, 2380)
-                    .withCommand(
-                            "/usr/local/bin/etcd " +
-                                    "--name node1 " +
-                                    "--listen-peer-urls http://0.0.0.0:2380 " +
-                                    "--listen-client-urls http://0.0.0.0:2379 " +
-                                    "--advertise-client-urls http://0.0.0.0:2379 " +
-                                    "--initial-cluster node1=http://0.0.0.0:2380 " +
-                                    "--initial-advertise-peer-urls http://0.0.0.0:2380"
-                    );
-
-    private static EtcdClient etcdClient;
-
-    @BeforeClass
-    public static void initClient() {
-        etcdClient = EtcdClient.newBuilder()
-                .withEndpoint(
-                        etcd.getContainerIpAddress(),
-                        etcd.getMappedPort(2379)
-                ).build();
-    }
-
+public class EtcdClientTest extends EtcdTestClusterConfiguration {
     @Test
     public void shouldCorrectlyReturnStoredValue() throws Exception {
-        String key = "key";
+        String key = "etcd-key";
         String storedValue = "42";
 
         CompletableFuture<GetResponse> getCF = etcdClient
                 .put(key, storedValue)
-                .thenCompose(putResponse -> etcdClient.get(key));
+                .thenCompose(putResponse -> etcdClient.getAllByPrefix(key));
         String retrievedValue = getCF.get().getKvs().get(0).getValue().toStringUtf8();
+
         assertEquals(storedValue, retrievedValue);
+    }
+
+    @Test
+    public void prefixQueryShouldReturnAllAvailableValues() throws Exception {
+        String prefix = "etcd-prefix";
+        String key1 = prefix + "1";
+        String key2 = prefix + "2";
+        String key3 = prefix + "3";
+        String value = "42";
+
+        GetResponse getResponse = CompletableFuture.allOf(
+                etcdClient.put(key1, value),
+                etcdClient.put(key2, value),
+                etcdClient.put(key3, value)
+        ).thenCompose(putResponse -> etcdClient.getAllByPrefix(prefix)).get();
+
+        assertEquals(3, getResponse.getCount());
+    }
+
+    @Test
+    public void leaseQueriesShouldExpireAfterClosingClient() {
+
     }
 }

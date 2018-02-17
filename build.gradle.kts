@@ -15,6 +15,7 @@ subprojects.forEach({
 
         setDependenyVersion(project, "jetcd", "0.0.1")
         setDependenyVersion(project, "guava", "23.0")
+        setDependenyVersion(project, "spring-cloud-commons", "1.3.2.RELEASE")
         setDependenyVersion(project, "testcontainers", "1.6.0")
         setDependenyVersion(project, "junit", "4.12")
     }
